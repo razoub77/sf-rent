@@ -1,11 +1,12 @@
 import os
 import re
+import time
 
 import dotenv
 import requests as req
 from bs4 import BeautifulSoup
 
-# from selenium import webdriver
+from form import FormInput
 
 dotenv.load_dotenv()
 
@@ -34,11 +35,6 @@ def format_price(price_str):
 
 
 for i in range(len(rental_listings)):
-    price_tag = rental_listings[i].select_one('span[data-test="property-card-price"]')
-    if price_tag is not None:
-        price = format_price(price_tag.text)
-        rental_prices.append(price)
-
     address_tag = rental_listings[i].select_one(
         'address[data-test="property-card-addr"]'
     )
@@ -46,13 +42,22 @@ for i in range(len(rental_listings)):
         address = address_tag.text.strip().replace(" | ", ", ")
         rental_addresses.append(address)
 
+    price_tag = rental_listings[i].select_one('span[data-test="property-card-price"]')
+    if price_tag is not None:
+        price = format_price(price_tag.text)
+        rental_prices.append(price)
+
     link_tag = rental_listings[i].select_one('a[data-test="property-card-link"]')
     if link_tag is not None:
         rental_links.append(link_tag["href"])
 
+form_input = FormInput(FORM_LINK)
 
-# options = webdriver.ChromeOptions()
-# options.add_experimental_option("detach", True)
-
-# driver = webdriver.Chrome(options)
-# driver.get(FORM_LINK)
+for i in range(len(rental_listings)):
+    time.sleep(0.5)
+    form_input.address_input(rental_addresses[i])
+    form_input.price_input(rental_prices[i])
+    form_input.link_input(rental_links[i])
+    form_input.send()
+    time.sleep(1)
+    form_input.refresh()
